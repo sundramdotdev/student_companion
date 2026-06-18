@@ -175,6 +175,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 80,
+                errorBuilder: (context, error, stackTrace) => const SizedBox(),
+              ),
+            ),
+            const SizedBox(height: 16),
             // Theme selector Card
             Text('Aesthetics', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -353,6 +361,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 32),
+            Center(
+              child: Text(
+                'design and developed by Sundramdotdev',
+                style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+              ),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

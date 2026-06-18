@@ -16,18 +16,31 @@ class DashboardScreen extends ConsumerWidget {
 
   String _getWeekdayName(int weekday) {
     switch (weekday) {
-      case DateTime.monday: return 'Monday';
-      case DateTime.tuesday: return 'Tuesday';
-      case DateTime.wednesday: return 'Wednesday';
-      case DateTime.thursday: return 'Thursday';
-      case DateTime.friday: return 'Friday';
-      case DateTime.saturday: return 'Saturday';
-      case DateTime.sunday: return 'Sunday';
-      default: return '';
+      case DateTime.monday:
+        return 'Monday';
+      case DateTime.tuesday:
+        return 'Tuesday';
+      case DateTime.wednesday:
+        return 'Wednesday';
+      case DateTime.thursday:
+        return 'Thursday';
+      case DateTime.friday:
+        return 'Friday';
+      case DateTime.saturday:
+        return 'Saturday';
+      case DateTime.sunday:
+        return 'Sunday';
+      default:
+        return '';
     }
   }
 
-  void _quickLog(BuildContext context, WidgetRef ref, Subject subject, AttendanceStatus status) {
+  void _quickLog(
+    BuildContext context,
+    WidgetRef ref,
+    Subject subject,
+    AttendanceStatus status,
+  ) {
     final log = AttendanceLog(
       id: const Uuid().v4(),
       subjectId: subject.id,
@@ -41,7 +54,8 @@ class DashboardScreen extends ConsumerWidget {
         content: Text('Marked ${subject.name} as ${status.name.toUpperCase()}'),
         action: SnackBarAction(
           label: 'UNDO',
-          onPressed: () => ref.read(attendanceLogsProvider.notifier).deleteLog(log.id),
+          onPressed: () =>
+              ref.read(attendanceLogsProvider.notifier).deleteLog(log.id),
         ),
       ),
     );
@@ -62,10 +76,7 @@ class DashboardScreen extends ConsumerWidget {
     for (final subject in subjects) {
       for (final schedule in subject.schedules) {
         if (schedule.dayOfWeek.toLowerCase() == todayWeekdayStr.toLowerCase()) {
-          todayClasses.add({
-            'subject': subject,
-            'schedule': schedule,
-          });
+          todayClasses.add({'subject': subject, 'schedule': schedule});
         }
       }
     }
@@ -98,7 +109,9 @@ class DashboardScreen extends ConsumerWidget {
       }
     }
 
-    final double overallPercent = totalClasses == 0 ? 100.0 : (totalPresent / totalClasses) * 100;
+    final double overallPercent = totalClasses == 0
+        ? 100.0
+        : (totalPresent / totalClasses) * 100;
 
     // 3. Upcoming Deadlines
     final upcomingAssessments = assessments
@@ -115,7 +128,9 @@ class DashboardScreen extends ConsumerWidget {
       totalEarnedWeighted += stats['earnedWeighted'] as double;
       totalWeightageEvaluated += stats['totalWeightage'] as double;
     }
-    final double overallInternalsPercent = totalWeightageEvaluated == 0 ? 0.0 : (totalEarnedWeighted / totalWeightageEvaluated) * 100;
+    final double overallInternalsPercent = totalWeightageEvaluated == 0
+        ? 0.0
+        : (totalEarnedWeighted / totalWeightageEvaluated) * 100;
 
     return Scaffold(
       body: CustomScrollView(
@@ -126,7 +141,10 @@ class DashboardScreen extends ConsumerWidget {
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              titlePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
               title: Text(
                 'Student Companion',
                 style: theme.textTheme.titleLarge?.copyWith(
@@ -169,19 +187,29 @@ class DashboardScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('ATTENDANCE', style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey)),
+                              Text(
+                                'ATTENDANCE',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.grey,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Text(
                                 '${overallPercent.toStringAsFixed(1)}%',
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: overallPercent >= minAttendance ? theme.colorScheme.secondary : theme.colorScheme.error,
+                                  color: overallPercent >= minAttendance
+                                      ? theme.colorScheme.secondary
+                                      : theme.colorScheme.error,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '$totalPresent / $totalClasses Classes',
-                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
@@ -196,7 +224,12 @@ class DashboardScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('CGPA SNAPSHOT', style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey)),
+                              Text(
+                                'CGPA SNAPSHOT',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: Colors.grey,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Text(
                                 cgpa.toStringAsFixed(2),
@@ -206,7 +239,13 @@ class DashboardScreen extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text('Scale: Standard', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                              const Text(
+                                'Scale: Standard',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -217,40 +256,66 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Today's Classes Timetable
-                Text('Today\'s Classes ($todayWeekdayStr)', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Today\'s Classes ($todayWeekdayStr)',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 if (todayClasses.isEmpty)
                   Card(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
                     child: const Padding(
                       padding: EdgeInsets.all(16.0),
-                      child: Center(child: Text('No classes scheduled for today. Rest up!')),
+                      child: Center(
+                        child: Text('No classes scheduled for today. Rest up!'),
+                      ),
                     ),
                   )
                 else
                   ...todayClasses.map((item) {
                     final subject = item['subject'] as Subject;
                     final schedule = item['schedule'] as Schedule;
-                    final startStr = '${schedule.startHour.toString().padLeft(2, '0')}:${schedule.startMinute.toString().padLeft(2, '0')}';
-                    final endStr = '${schedule.endHour.toString().padLeft(2, '0')}:${schedule.endMinute.toString().padLeft(2, '0')}';
+                    final startStr =
+                        '${schedule.startHour.toString().padLeft(2, '0')}:${schedule.startMinute.toString().padLeft(2, '0')}';
+                    final endStr =
+                        '${schedule.endHour.toString().padLeft(2, '0')}:${schedule.endMinute.toString().padLeft(2, '0')}';
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          backgroundColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           child: const Icon(Icons.school_outlined),
                         ),
-                        title: Text(subject.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(
+                          subject.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         subtitle: Text('$startStr - $endStr'),
                         trailing: PopupMenuButton<AttendanceStatus>(
                           icon: const Icon(Icons.check_circle_outline),
                           tooltip: 'Quick Log Attendance',
-                          onSelected: (status) => _quickLog(context, ref, subject, status),
+                          onSelected: (status) =>
+                              _quickLog(context, ref, subject, status),
                           itemBuilder: (context) => [
-                            const PopupMenuItem(value: AttendanceStatus.present, child: Text('Present')),
-                            const PopupMenuItem(value: AttendanceStatus.absent, child: Text('Absent')),
-                            const PopupMenuItem(value: AttendanceStatus.cancelled, child: Text('Cancelled')),
+                            const PopupMenuItem(
+                              value: AttendanceStatus.present,
+                              child: Text('Present'),
+                            ),
+                            const PopupMenuItem(
+                              value: AttendanceStatus.absent,
+                              child: Text('Absent'),
+                            ),
+                            const PopupMenuItem(
+                              value: AttendanceStatus.cancelled,
+                              child: Text('Cancelled'),
+                            ),
                           ],
                         ),
                       ),
@@ -262,30 +327,54 @@ class DashboardScreen extends ConsumerWidget {
                 if (atRiskSubjects.isNotEmpty) ...[
                   Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: theme.colorScheme.error,
+                      ),
                       const SizedBox(width: 8),
-                      Text('Attendance Danger Zone', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.error)),
+                      Text(
+                        'Attendance Danger Zone',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Card(
-                    color: theme.colorScheme.errorContainer.withValues(alpha: 0.2),
+                    color: theme.colorScheme.errorContainer.withValues(
+                      alpha: 0.2,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+                      side: BorderSide(
+                        color: theme.colorScheme.error.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: atRiskSubjects.map((subject) {
-                          final stats = ref.watch(subjectStatsProvider(subject));
+                          final stats = ref.watch(
+                            subjectStatsProvider(subject),
+                          );
                           final percent = stats['percentage'] as double;
                           return ListTile(
                             dense: true,
-                            title: Text(subject.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text('Current attendance is ${percent.toStringAsFixed(1)}% (Min req: ${subject.minAttendancePercent.toStringAsFixed(0)}%)'),
+                            title: Text(
+                              subject.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Current attendance is ${percent.toStringAsFixed(1)}% (Min req: ${subject.minAttendancePercent.toStringAsFixed(0)}%)',
+                            ),
                             trailing: TextButton(
-                              onPressed: () => context.push('/attendance/detail/${subject.id}'),
+                              onPressed: () => context.push(
+                                '/attendance/detail/${subject.id}',
+                              ),
                               child: const Text('RECOVER'),
                             ),
                           );
@@ -297,7 +386,12 @@ class DashboardScreen extends ConsumerWidget {
                 ],
 
                 // Internal Marks Summary Box
-                Text('Internal Assessment Summary', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Internal Assessment Summary',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Card(
                   child: Padding(
@@ -308,10 +402,19 @@ class DashboardScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Overall Evaluated Marks Ratio:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            const Text(
+                              'Overall Evaluated Marks Ratio:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
                             Text(
                               '${overallInternalsPercent.toStringAsFixed(1)}%',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.primary),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
                           ],
                         ),
@@ -326,8 +429,11 @@ class DashboardScreen extends ConsumerWidget {
                         const SizedBox(height: 8),
                         Text(
                           'Based on assessments evaluated across all courses. Total weight evaluated: ${totalWeightageEvaluated.toStringAsFixed(0)}%.',
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
-                        )
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -335,31 +441,50 @@ class DashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
 
                 // Upcoming Homework / Exam Deadlines
-                Text('Upcoming Deadlines', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'Upcoming Deadlines',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 if (upcomingAssessments.isEmpty)
                   Card(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
                     child: const Padding(
                       padding: EdgeInsets.all(16.0),
-                      child: Center(child: Text('No upcoming deadlines. Good job!')),
+                      child: Center(
+                        child: Text('No upcoming deadlines. Good job!'),
+                      ),
                     ),
                   )
                 else
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: upcomingAssessments.length > 3 ? 3 : upcomingAssessments.length,
+                    itemCount: upcomingAssessments.length > 3
+                        ? 3
+                        : upcomingAssessments.length,
                     itemBuilder: (context, index) {
                       final item = upcomingAssessments[index];
-                      final dateStr = DateFormat('EEE, d MMM').format(item.dueDate!);
+                      final dateStr = DateFormat(
+                        'EEE, d MMM',
+                      ).format(item.dueDate!);
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 6),
                         child: ListTile(
                           dense: true,
-                          leading: const Icon(Icons.event_note, color: Colors.amber),
-                          title: Text(item.type == 'Custom' ? item.name : item.type, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          leading: const Icon(
+                            Icons.event_note,
+                            color: Colors.amber,
+                          ),
+                          title: Text(
+                            item.type == 'Custom' ? item.name : item.type,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           subtitle: Text('Due: $dateStr'),
                         ),
                       );
@@ -367,7 +492,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
               ]),
             ),
-          )
+          ),
         ],
       ),
     );

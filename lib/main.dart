@@ -8,7 +8,7 @@ import 'features/settings/presentation/providers/settings_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize storage
   final hiveService = HiveService();
   await hiveService.init();
@@ -17,11 +17,7 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.init();
 
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
