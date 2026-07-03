@@ -8,116 +8,134 @@ Managing attendance, internal assessments, assignments, and academic performance
 
 Student Companion solves this problem by providing a centralized academic dashboard that helps students:
 
-*   Track attendance across multiple subjects
-*   Calculate safe bunk limits
-*   Monitor attendance percentage requirements
-*   Calculate SGPA and CGPA
-*   Manage internal marks and assessments
-*   Receive class and academic reminders
-*   Store academic data securely on-device
-*   Work entirely offline without any backend dependency
+- Track attendance across multiple subjects
+- Calculate safe bunk limits
+- Monitor attendance percentage requirements
+- Calculate SGPA and CGPA
+- Manage internal marks and assessments
+- Receive class and academic reminders
+- Store academic data securely on-device
+- Work entirely offline without any backend dependency
 
 ## Features
 
 ### Attendance Tracker
 
-*   Subject-wise attendance management
-*   Daily attendance recording
-*   Present, Absent, and Cancelled class tracking
-*   Attendance percentage calculation
-*   Weekly and monthly attendance insights
-*   Low attendance alerts
+- Subject-wise attendance management
+- Daily attendance recording
+- Present, Absent, and Cancelled class tracking
+- Attendance percentage calculation
+- Weekly and monthly attendance insights
+- Low attendance alerts
 
 ### Bunk Calculator
 
-*   Custom attendance requirement support
-*   Safe bunk prediction
-*   Whole-day bunk simulation
-*   Future attendance forecasting
-*   Recovery planning suggestions
-*   Attendance risk analysis
+- Custom attendance requirement support
+- Safe bunk prediction
+- Whole-day bunk simulation
+- Future attendance forecasting
+- Recovery planning suggestions
+- Attendance risk analysis
 
 ### GPA Calculator
 
-*   Semester GPA calculation
-*   Cumulative GPA calculation
-*   Custom grading system support
-*   Credit-based GPA calculations
-*   GPA target planning
+- Semester GPA calculation
+- Cumulative GPA calculation
+- Custom grading system support
+- Credit-based GPA calculations
+- GPA target planning
 
 ### Internal Marks Manager
 
-*   Assignment tracking
-*   Class test management
-*   Internal test tracking
-*   Mid-semester marks management
-*   Presentation marks storage
-*   Lab and practical assessment tracking
-*   Custom assessment categories
-*   Passing criteria analysis
+- Assignment tracking
+- Class test management
+- Internal test tracking
+- Mid-semester marks management
+- Presentation marks storage
+- Lab and practical assessment tracking
+- Custom assessment categories
+- Passing criteria analysis
 
 ### Smart Notifications
 
-*   Class reminders
-*   Attendance update reminders
-*   Assignment deadline alerts
-*   Internal exam reminders
-*   Low attendance warnings
-*   Academic performance notifications
+- Class reminders
+- Attendance update reminders
+- Assignment deadline alerts
+- Internal exam reminders
+- Low attendance warnings
+- Academic performance notifications
 
 ### Timetable Management
 
-*   Weekly class schedules
-*   Subject-specific timings
-*   Custom class planning
-*   Schedule-based notifications
+- Weekly class schedules
+- Subject-specific timings
+- Custom class planning
+- Schedule-based notifications
 
 ### Offline First
 
-*   No internet connection required
-*   No backend infrastructure required
-*   Fast local data access
-*   Complete privacy and control
+- No internet connection required
+- No backend infrastructure required
+- Fast local data access
+- Complete privacy and control
 
 ### Backup & Restore
 
-*   Export academic data
-*   Import previous backups
-*   JSON-based data migration
-*   Easy device transfer support
+- Export academic data
+- Import previous backups
+- JSON-based data migration
+- Easy device transfer support
+
+# 📸 Screenshots
+
+| Attendance                             | Dashboard                             |
+| -------------------------------------- | ------------------------------------- |
+| ![](assets/screenshots/attendance.jpg) | ![](assets/screenshots/dashboard.jpg) |
+
+| Time Table                            | Bunk Calculator                      |
+| ------------------------------------- | ------------------------------------ |
+| ![](assets/screenshots/timetable.jpg) | ![](assets/screenshots/bunkcalc.jpg) |
+
+| Gpa Manager                     | Internal Assignment Manager          |
+| ------------------------------- | ------------------------------------ |
+| ![](assets/screenshots/gpa.jpg) | ![](assets/screenshots/internal.jpg) |
+
+| Settings                             | Configuration                             |
+| ------------------------------------ | ----------------------------------------- |
+| ![](assets/screenshots/settings.jpg) | ![](assets/screenshots/configuration.jpg) |
 
 ## Tech Stack
 
 ### Framework
 
-*   Flutter
-*   Dart
+- Flutter
+- Dart
 
 ### Architecture
 
-*   Clean Architecture
-*   Feature-Based Modular Structure
+- Clean Architecture
+- Feature-Based Modular Structure
 
 ### State Management
 
-*   Riverpod
+- Riverpod
 
 ### Local Storage
 
-*   Hive Database
+- Hive Database
 
 ### Routing
 
-*   Go Router
+- Go Router
 
 ### Notifications
 
-*   Flutter Local Notifications
+- Flutter Local Notifications
 
 ### Code Generation
 
-*   Freezed
-*   Build Runner
+- Freezed
+- Build Runner
 
 ## Project Structure
 
@@ -131,9 +149,9 @@ lib/
 │  
 ├── features/  
 │ ├── attendance/  
-│ ├── bunk\_calculator/  
+│ ├── bunk_calculator/  
 │ ├── gpa/  
-│ ├── internal\_marks/  
+│ ├── internal_marks/  
 │ ├── timetable/  
 │ └── dashboard/  
 │  
@@ -148,31 +166,31 @@ lib/
 
 ## Key Objectives
 
-*   Production-ready architecture
-*   Fully offline functionality
-*   High performance
-*   Clean and maintainable codebase
-*   Scalable feature development
-*   Play Store deployment readiness
+- Production-ready architecture
+- Fully offline functionality
+- High performance
+- Clean and maintainable codebase
+- Scalable feature development
+- Play Store deployment readiness
 
 ## Future Enhancements
 
-*   Academic analytics dashboard
-*   Study session tracker
-*   Placement preparation module
-*   Notes and document manager
-*   AI-powered academic assistant
-*   University-specific GPA systems
-*   Multi-device synchronization
+- Academic analytics dashboard
+- Study session tracker
+- Placement preparation module
+- Notes and document manager
+- AI-powered academic assistant
+- University-specific GPA systems
+- Multi-device synchronization
 
 ## Getting Started
 
 ### Prerequisites
 
-*   Flutter SDK
-*   Dart SDK
-*   Android Studio or VS Code
-*   Android Emulator or Physical Device
+- Flutter SDK
+- Dart SDK
+- Android Studio or VS Code
+- Android Emulator or Physical Device
 
 ### Installation
 
@@ -190,7 +208,7 @@ flutter pub get
 
 Generate required files:
 
-dart run build\_runner build --delete-conflicting-outputs
+dart run build_runner build --delete-conflicting-outputs
 
 Run the application:
 
@@ -198,13 +216,13 @@ flutter run
 
 ## Development Principles
 
-*   Clean Architecture
-*   SOLID Principles
-*   Modular Feature Development
-*   Offline-First Design
-*   Testable Codebase
-*   Production-Level Error Handling
-*   Scalable State Management
+- Clean Architecture
+- SOLID Principles
+- Modular Feature Development
+- Offline-First Design
+- Testable Codebase
+- Production-Level Error Handling
+- Scalable State Management
 
 ## License
 
