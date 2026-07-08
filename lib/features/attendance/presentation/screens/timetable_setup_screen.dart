@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../domain/entities/subject.dart';
 import '../../domain/entities/schedule.dart';
 import '../providers/attendance_providers.dart';
@@ -18,10 +20,10 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _facultyController = TextEditingController();
-  
+
   int _credits = 3;
   double _minAttendance = 75.0;
-  
+
   final List<Schedule> _schedules = [];
 
   // Temporary schedule slot fields
@@ -56,11 +58,9 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
     // Check if start time is before end time
     final startMinutes = _startTime.hour * 60 + _startTime.minute;
     final endMinutes = _endTime.hour * 60 + _endTime.minute;
-    
+
     if (startMinutes >= endMinutes) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Class end time must be after start time.')),
-      );
+      AppSnackBar.error(context, 'Class end time must be after start time');
       return;
     }
 
@@ -71,9 +71,7 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
         s.startMinute == _startTime.minute);
 
     if (exists) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('A class slot already exists at this day and time.')),
-      );
+      AppSnackBar.error(context, 'A class slot already exists at this day and time');
       return;
     }
 
@@ -100,6 +98,16 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _startTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: Theme.of(context).colorScheme.primary,
+                ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -117,6 +125,16 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _endTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+                  primary: Theme.of(context).colorScheme.primary,
+                ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -127,11 +145,9 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
 
   Future<void> _saveSubject() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_schedules.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one class schedule slot.')),
-      );
+      AppSnackBar.error(context, 'Please add at least one class schedule slot');
       return;
     }
 
@@ -146,11 +162,9 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
 
     // Save subject
     await ref.read(subjectsProvider.notifier).addSubject(subject);
-    
+
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${subject.name} added to schedule successfully.')),
-      );
+      AppSnackBar.success(context, '${subject.name} added successfully');
       context.pop();
     }
   }
@@ -158,217 +172,232 @@ class _TimetableSetupScreenState extends ConsumerState<TimetableSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Subject & Timetable'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
+        title: const Text('Add Subject'),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(
             onPressed: _saveSubject,
-          )
-        ],
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size.fromHeight(56),
+            ),
+            child: const Text('Save Subject'),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Subject Details',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Subject Name (e.g. Mathematics)*',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.book),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter subject name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _facultyController,
-                decoration: const InputDecoration(
-                  labelText: 'Faculty/Professor (Optional)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<int>(
-                      initialValue: _credits,
+              const SectionHeader(title: 'Subject Details'),
+              AppCard(
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: 'Credit Hours',
-                        border: OutlineInputBorder(),
+                        labelText: 'Subject Name *',
+                        hintText: 'e.g. Data Structures',
+                        prefixIcon: Icon(Icons.class_outlined),
                       ),
-                      items: List.generate(6, (index) => index + 1)
-                          .map((credit) => DropdownMenuItem(
-                                value: credit,
-                                child: Text('$credit Credits'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter subject name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _facultyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Faculty / Professor (Optional)',
+                        hintText: 'e.g. Dr. Smith',
+                        prefixIcon: Icon(Icons.person_outline_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            initialValue: _credits,
+                            decoration: const InputDecoration(
+                              labelText: 'Credit Hours',
+                              prefixIcon: Icon(Icons.confirmation_number_outlined),
+                            ),
+                            items: List.generate(6, (index) => index + 1)
+                                .map((credit) => DropdownMenuItem(
+                                      value: credit,
+                                      child: Text('$credit'),
+                                    ))
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _credits = val);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: _minAttendance.toStringAsFixed(0),
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Required %',
+                              prefixIcon: Icon(Icons.percent_rounded),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'Required';
+                              final val = double.tryParse(value);
+                              if (val == null || val < 0 || val > 100) return '0 - 100';
+                              return null;
+                            },
+                            onChanged: (val) {
+                              final parsed = double.tryParse(val);
+                              if (parsed != null) {
+                                setState(() => _minAttendance = parsed);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              const SectionHeader(title: 'Timetable Slots'),
+              AppCard(
+                child: Column(
+                  children: [
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedDay,
+                      decoration: const InputDecoration(
+                        labelText: 'Day of Week',
+                        prefixIcon: Icon(Icons.calendar_today_rounded),
+                      ),
+                      items: _daysOfWeek
+                          .map((day) => DropdownMenuItem(
+                                value: day,
+                                child: Text(day),
                               ))
                           .toList(),
                       onChanged: (val) {
-                        if (val != null) setState(() => _credits = val);
+                        if (val != null) setState(() => _selectedDay = val);
                       },
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: _minAttendance.toStringAsFixed(0),
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Required Attendance %',
-                        border: OutlineInputBorder(),
-                        suffixText: '%',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Required';
-                        final val = double.tryParse(value);
-                        if (val == null || val < 0 || val > 100) return '0 - 100';
-                        return null;
-                      },
-                      onChanged: (val) {
-                        final parsed = double.tryParse(val);
-                        if (parsed != null) {
-                          setState(() => _minAttendance = parsed);
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Divider(),
-              const SizedBox(height: 16),
-              Text(
-                'Weekly Schedule Slots',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              
-              // Custom Add Schedule Form Slot
-              Card(
-                color: theme.colorScheme.surfaceContainerHighest,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _selectedDay,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: _selectStartTime,
+                            borderRadius: BorderRadius.circular(16),
+                            child: InputDecorator(
                               decoration: const InputDecoration(
-                                labelText: 'Day of Week',
-                                border: OutlineInputBorder(),
+                                labelText: 'Start Time',
+                                prefixIcon: Icon(Icons.access_time_rounded),
                               ),
-                              items: _daysOfWeek
-                                  .map((day) => DropdownMenuItem(
-                                        value: day,
-                                        child: Text(day),
-                                      ))
-                                  .toList(),
-                              onChanged: (val) {
-                                if (val != null) setState(() => _selectedDay = val);
-                              },
+                              child: Text(_startTime.format(context)),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.access_time),
-                              label: Text('Starts: ${_startTime.format(context)}'),
-                              onPressed: _selectStartTime,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.access_time),
-                              label: Text('Ends: ${_endTime.format(context)}'),
-                              onPressed: _selectEndTime,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Slot to Timetable'),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(40),
                         ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: InkWell(
+                            onTap: _selectEndTime,
+                            borderRadius: BorderRadius.circular(16),
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'End Time',
+                                prefixIcon: Icon(Icons.access_time_filled_rounded),
+                              ),
+                              child: Text(_endTime.format(context)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Add Slot to Timetable'),
                         onPressed: _addScheduleSlot,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
 
               // Schedules List
               if (_schedules.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'No weekly schedule slots added yet.',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                    ),
-                  ),
+                const EmptyState(
+                  icon: Icons.schedule_rounded,
+                  title: 'No classes added',
+                  description: 'Add slots above to populate your timetable.',
                 )
               else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _schedules.length,
-                  itemBuilder: (context, index) {
-                    final slot = _schedules[index];
-                    final startStr = '${slot.startHour.toString().padLeft(2, '0')}:${slot.startMinute.toString().padLeft(2, '0')}';
-                    final endStr = '${slot.endHour.toString().padLeft(2, '0')}:${slot.endMinute.toString().padLeft(2, '0')}';
-                    
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        leading: const Icon(Icons.schedule),
-                        title: Text(slot.dayOfWeek),
-                        subtitle: Text('$startStr - $endStr'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.redAccent),
-                          onPressed: () => _removeScheduleSlot(index),
-                        ),
+                ..._schedules.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final slot = entry.value;
+                  final startStr =
+                      '${slot.startHour.toString().padLeft(2, '0')}:${slot.startMinute.toString().padLeft(2, '0')}';
+                  final endStr =
+                      '${slot.endHour.toString().padLeft(2, '0')}:${slot.endMinute.toString().padLeft(2, '0')}';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: AppCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.schedule_rounded, color: theme.colorScheme.primary),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  slot.dayOfWeek,
+                                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '$startStr - $endStr',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                            onPressed: () => _removeScheduleSlot(index),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _saveSubject,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                ),
-                child: const Text('Save Subject & Timetable', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
+                    ),
+                  );
+                }),
             ],
           ),
         ),

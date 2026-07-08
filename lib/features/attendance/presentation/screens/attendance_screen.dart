@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../domain/entities/subject.dart';
 import '../../domain/entities/attendance_log.dart';
 import '../providers/attendance_providers.dart';
@@ -10,17 +13,8 @@ import '../../../settings/presentation/providers/settings_providers.dart';
 class AttendanceScreen extends ConsumerWidget {
   const AttendanceScreen({super.key});
 
-  Color _getIndicatorColor(double percent, double requiredPercent, ThemeData theme) {
-    if (percent >= requiredPercent) {
-      return theme.colorScheme.secondary; // Green
-    } else if (percent >= requiredPercent - 5.0) {
-      return theme.colorScheme.tertiary; // Orange (danger zone)
-    } else {
-      return theme.colorScheme.error; // Red
-    }
-  }
-
   void _quickLog(BuildContext context, WidgetRef ref, Subject subject, AttendanceStatus status) {
+    HapticFeedback.lightImpact();
     final log = AttendanceLog(
       id: const Uuid().v4(),
       subjectId: subject.id,
@@ -28,19 +22,17 @@ class AttendanceScreen extends ConsumerWidget {
       status: status,
     );
     ref.read(attendanceLogsProvider.notifier).logAttendance(log);
-    
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Logged ${status.name.toUpperCase()} for ${subject.name}'),
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'UNDO',
-          onPressed: () {
-            ref.read(attendanceLogsProvider.notifier).deleteLog(log.id);
-          },
-        ),
-      ),
+    AppSnackBar.show(
+      context,
+      message: '${status.name[0].toUpperCase()}${status.name.substring(1)} — ${subject.name}',
+      icon: status == AttendanceStatus.present
+          ? Icons.check_circle_rounded
+          : status == AttendanceStatus.absent
+              ? Icons.cancel_rounded
+              : Icons.block_rounded,
+      iconColor: status == AttendanceStatus.present ? AppColors.success : status == AttendanceStatus.absent ? AppColors.danger : null,
+      actionLabel: 'UNDO',
+      onAction: () => ref.read(attendanceLogsProvider.notifier).deleteLog(log.id),
     );
   }
 
@@ -48,123 +40,107 @@ class AttendanceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final subjects = ref.watch(subjectsProvider);
-    
+    final double requiredThreshold = ref.watch(minAttendanceProvider);
 
-    // Calculate Overall Stats
+    // Overall stats
     int totalPresent = 0;
     int totalClasses = 0;
-
     for (final subject in subjects) {
       final stats = ref.watch(subjectStatsProvider(subject));
       totalPresent += stats['present'] as int;
       totalClasses += stats['total'] as int;
     }
-
     final double overallPercent = totalClasses == 0 ? 100.0 : (totalPresent / totalClasses) * 100;
-    final double requiredThreshold = ref.watch(minAttendanceProvider);
-    final Color overallColor = _getIndicatorColor(overallPercent, requiredThreshold, theme);
+    final Color overallColor = AppColors.attendanceStatus(overallPercent, requiredThreshold);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attendance Tracker'),
+        title: const Text('Attendance'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_rounded),
             onPressed: () => context.push('/settings'),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () => context.push('/attendance/timetable'),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.add_rounded),
         label: const Text('Add Subject'),
       ),
       body: CustomScrollView(
         slivers: [
-          // Overall Summary Header Card
+          // ── Overall Summary ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Card(
-                color: overallColor.withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: overallColor.withValues(alpha: 0.3), width: 1.5),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Overall Attendance',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: overallColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${overallPercent.toStringAsFixed(1)}%',
-                        style: theme.textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: overallColor,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: overallPercent / 100.0,
-                          backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                          color: overallColor,
-                          minHeight: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: AppCard(
+                border: BorderSide(color: overallColor.withValues(alpha: 0.3)),
+                child: Row(
+                  children: [
+                    ProgressRing(
+                      percent: overallPercent,
+                      color: overallColor,
+                      size: 80,
+                      strokeWidth: 7,
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Required: ${requiredThreshold.toStringAsFixed(0)}%',
-                            style: theme.textTheme.bodyMedium,
+                            'Overall Attendance',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                '${overallPercent.toStringAsFixed(1)}%',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: overallColor,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              StatusChip.attendance(overallPercent, requiredThreshold),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
                           Text(
-                            'Attended: $totalPresent / $totalClasses classes',
-                            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                            '$totalPresent attended · $totalClasses total · ${requiredThreshold.toStringAsFixed(0)}% required',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
-          if (subjects.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.calendar_today, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.4)),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No subjects added yet.',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap "Add Subject" below to setup your timetable.',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
                     ),
                   ],
                 ),
               ),
+            ),
+          ),
+
+          // ── Empty / Subject List ──
+          if (subjects.isEmpty)
+            SliverFillRemaining(
+              child: EmptyState(
+                icon: Icons.event_note_rounded,
+                title: 'No subjects added yet',
+                description: 'Set up your timetable to start tracking attendance across all your subjects.',
+                actionLabel: 'Add Subject',
+                onAction: () => context.push('/attendance/timetable'),
+              ),
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -174,132 +150,115 @@ class AttendanceScreen extends ConsumerWidget {
                     final int present = stats['present'] as int;
                     final int total = stats['total'] as int;
                     final int absent = stats['absent'] as int;
-                    
-                    final Color indicatorColor = _getIndicatorColor(percent, subject.minAttendancePercent, theme);
-                    
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: InkWell(
+                    final Color statusColor = AppColors.attendanceStatus(percent, subject.minAttendancePercent);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: AppCard(
                         onTap: () => context.push('/attendance/detail/${subject.id}'),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Subject Header & Percentage
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header row
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        subject.name,
+                                        style: theme.textTheme.titleSmall?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (subject.facultyName != null) ...[
+                                        const SizedBox(height: 2),
                                         Text(
-                                          subject.name,
-                                          style: theme.textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
+                                          subject.facultyName!,
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            color: theme.colorScheme.onSurfaceVariant,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        if (subject.facultyName != null)
-                                          Text(
-                                            subject.facultyName!,
-                                            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
                                       ],
-                                    ),
+                                    ],
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: indicatorColor.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: indicatorColor.withValues(alpha: 0.3)),
-                                    ),
-                                    child: Text(
-                                      '${percent.toStringAsFixed(0)}%',
-                                      style: TextStyle(
-                                        color: indicatorColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              // Progress bar
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: LinearProgressIndicator(
-                                  value: percent / 100.0,
-                                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                                  color: indicatorColor,
-                                  minHeight: 6,
                                 ),
+                                const SizedBox(width: 12),
+                                StatusChip.attendance(percent, subject.minAttendancePercent),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Progress bar
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: (percent / 100.0).clamp(0.0, 1.0),
+                                backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                                color: statusColor,
+                                minHeight: 6,
                               ),
-                              const SizedBox(height: 12),
-                              // Stats text
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Present: $present | Absent: $absent | Total: $total',
-                                    style: theme.textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Stats row
+                            Row(
+                              children: [
+                                Text(
+                                  '${percent.toStringAsFixed(0)}%',
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: statusColor,
                                   ),
-                                  Text(
-                                    'Req: ${subject.minAttendancePercent.toStringAsFixed(0)}%',
-                                    style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  '$present present · $absent absent · $total total',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              // Quick action buttons
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      icon: const Icon(Icons.check, size: 16),
-                                      label: const Text('Present'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: theme.colorScheme.secondary,
-                                        side: BorderSide(color: theme.colorScheme.secondary.withValues(alpha: 0.4)),
-                                      ),
-                                      onPressed: () => _quickLog(context, ref, subject, AttendanceStatus.present),
-                                    ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Quick log buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _QuickLogButton(
+                                    icon: Icons.check_rounded,
+                                    label: 'Present',
+                                    color: AppColors.success,
+                                    onTap: () => _quickLog(context, ref, subject, AttendanceStatus.present),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      icon: const Icon(Icons.close, size: 16),
-                                      label: const Text('Absent'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: theme.colorScheme.error,
-                                        side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.4)),
-                                      ),
-                                      onPressed: () => _quickLog(context, ref, subject, AttendanceStatus.absent),
-                                    ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _QuickLogButton(
+                                    icon: Icons.close_rounded,
+                                    label: 'Absent',
+                                    color: AppColors.danger,
+                                    onTap: () => _quickLog(context, ref, subject, AttendanceStatus.absent),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      icon: const Icon(Icons.block, size: 16),
-                                      label: const Text('Cancel'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.grey,
-                                        side: const BorderSide(color: Colors.grey),
-                                      ),
-                                      onPressed: () => _quickLog(context, ref, subject, AttendanceStatus.cancelled),
-                                    ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _QuickLogButton(
+                                    icon: Icons.remove_rounded,
+                                    label: 'Cancel',
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    onTap: () => _quickLog(context, ref, subject, AttendanceStatus.cancelled),
                                   ),
-                                ],
-                              )
-                            ],
-                          ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -308,6 +267,44 @@ class AttendanceScreen extends ConsumerWidget {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact quick log button with icon + label.
+class _QuickLogButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickLogButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: color.withValues(alpha: 0.3)),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 4),
+          Text(label, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
