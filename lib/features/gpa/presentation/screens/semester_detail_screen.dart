@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../domain/entities/semester.dart';
 import '../providers/gpa_providers.dart';
 
@@ -15,7 +18,7 @@ class SemesterDetailScreen extends ConsumerStatefulWidget {
 class _SemesterDetailScreenState extends ConsumerState<SemesterDetailScreen> {
   final _nameController = TextEditingController();
   final _creditsController = TextEditingController(text: '3');
-  
+
   String? _selectedGrade;
 
   @override
@@ -27,11 +30,11 @@ class _SemesterDetailScreenState extends ConsumerState<SemesterDetailScreen> {
 
   void _addCourse(Semester semester, List<String> availableGrades) {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter course name')),
-      );
+      AppSnackBar.error(context, 'Please enter course name');
       return;
     }
+    
+    HapticFeedback.lightImpact();
 
     final credits = int.tryParse(_creditsController.text) ?? 3;
     final grade = _selectedGrade ?? (availableGrades.isNotEmpty ? availableGrades.first : 'A');
@@ -52,7 +55,6 @@ class _SemesterDetailScreenState extends ConsumerState<SemesterDetailScreen> {
 
     ref.read(semestersProvider.notifier).updateSemester(updatedSemester);
 
-    // Reset controllers
     setState(() {
       _nameController.clear();
       _creditsController.text = '3';
@@ -60,6 +62,7 @@ class _SemesterDetailScreenState extends ConsumerState<SemesterDetailScreen> {
   }
 
   void _removeCourse(Semester semester, int index) {
+    HapticFeedback.selectionClick();
     final updatedSubjects = List<SGPAEntry>.from(semester.subjects)..removeAt(index);
     final updatedSemester = semester.copyWith(subjects: updatedSubjects);
     ref.read(semestersProvider.notifier).updateSemester(updatedSemester);
@@ -76,13 +79,18 @@ class _SemesterDetailScreenState extends ConsumerState<SemesterDetailScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('CANCEL'),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () {
               ref.read(semestersProvider.notifier).deleteSemester(id);
               Navigator.pop(context);
               context.pop();
+              AppSnackBar.show(context, message: 'Semester deleted');
             },
-            child: const Text('DELETE', style: TextStyle(color: Colors.red)),
+            child: const Text('DELETE'),
           ),
         ],
       ),
@@ -103,13 +111,17 @@ class _SemesterDetailScreenState extends ConsumerState<SemesterDetailScreen> {
     if (semester.id.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: const Text('Semester Details')),
-        body: const Center(child: Text('Semester not found.')),
+        body: const EmptyState(
+          icon: Icons.error_outline_rounded,
+          title: 'Not Found',
+          description: 'The requested semester could not be found.',
+        ),
       );
     }
 
     final repo = ref.read(gpaRepositoryProvider);
     final sgpa = repo.calculateSGPA(semester, activeSystem);
-    
+
     final gradesList = activeSystem.grades.keys.toList();
     if (_selectedGrade == null && gradesList.isNotEmpty) {
       _selectedGrade = gradesList.first;
@@ -120,156 +132,185 @@ class _SemesterDetailScreenState extends ConsumerState<SemesterDetailScreen> {
         title: Text(semester.name),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            icon: Icon(Icons.delete_outline_rounded, color: AppColors.danger),
             onPressed: () => _deleteSemester(semester.id),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dynamic SGPA Header Box
-            Card(
-              color: theme.colorScheme.secondaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Semester SGPA',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSecondaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+            // ── Dynamic SGPA Header Box ──
+            AppCard(
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              border: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Semester SGPA',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Based on ${semester.subjects.length} course entries',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      sgpa.toStringAsFixed(2),
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSecondaryContainer,
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Based on ${semester.subjects.length} course entries',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    sgpa.toStringAsFixed(2),
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // Form to Add Course
-            Text('Add Course Entry', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Course Name (e.g. Computer Science)',
-                        border: OutlineInputBorder(),
-                      ),
+            // ── Add Course Form ──
+            const SectionHeader(title: 'Add Course Entry'),
+            AppCard(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Course Name',
+                      hintText: 'e.g. Computer Science',
+                      prefixIcon: Icon(Icons.class_outlined),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _creditsController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Credits',
-                              border: OutlineInputBorder(),
-                            ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _creditsController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Credits',
+                            prefixIcon: Icon(Icons.confirmation_number_outlined),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            initialValue: _selectedGrade,
-                            decoration: const InputDecoration(
-                              labelText: 'Grade Earned',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: gradesList.map((grade) {
-                              return DropdownMenuItem(
-                                value: grade,
-                                child: Text(grade),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedGrade = val;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Course to Semester'),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(45),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedGrade,
+                          decoration: const InputDecoration(
+                            labelText: 'Grade Earned',
+                            prefixIcon: Icon(Icons.military_tech_rounded),
+                          ),
+                          items: gradesList.map((grade) {
+                            return DropdownMenuItem(
+                              value: grade,
+                              child: Text(grade),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _selectedGrade = val;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Text('Add Course'),
                       onPressed: () => _addCourse(semester, gradesList),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // List of Course Entries
-            Text('Course Entries', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            // ── Course Entries List ──
+            const SectionHeader(title: 'Course Entries'),
             if (semester.subjects.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.0),
-                  child: Text('No course entries added yet.', style: TextStyle(color: Colors.grey)),
-                ),
+              const EmptyState(
+                icon: Icons.receipt_long_rounded,
+                title: 'No courses added',
+                description: 'Add courses above to calculate this semester\'s SGPA.',
               )
             else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: semester.subjects.length,
-                itemBuilder: (context, index) {
-                  final subject = semester.subjects[index];
-                  final points = activeSystem.grades[subject.grade.toUpperCase()] ?? 0.0;
+              ...semester.subjects.asMap().entries.map((entry) {
+                final index = entry.key;
+                final subject = entry.value;
+                final points = activeSystem.grades[subject.grade.toUpperCase()] ?? 0.0;
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(subject.subjectName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('${subject.credits} Credits | Grade: ${subject.grade} ($points Pts)'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                        onPressed: () => _removeCourse(semester, index),
-                      ),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: AppCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              subject.grade,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                subject.subjectName,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${subject.credits} Credits · $points Points',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                          onPressed: () => _removeCourse(semester, index),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              }),
           ],
         ),
       ),
