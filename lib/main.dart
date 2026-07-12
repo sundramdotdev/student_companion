@@ -4,6 +4,7 @@ import 'core/router/router.dart';
 import 'core/storage/hive_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/theme/theme.dart';
+import 'core/config/app_info.dart';
 import 'features/settings/presentation/providers/settings_providers.dart';
 
 void main() async {
@@ -16,6 +17,9 @@ void main() async {
   // Initialize notifications
   final notificationService = NotificationService();
   await notificationService.init();
+
+  // Initialize app info
+  await AppInfoService.init();
 
   runApp(const ProviderScope(child: MyApp()));
 }
