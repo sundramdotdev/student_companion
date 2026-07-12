@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../attendance/presentation/providers/attendance_providers.dart';
 import '../providers/internals_providers.dart';
+import '../../../../core/widgets/widgets.dart';
 
 class InternalsScreen extends ConsumerWidget {
   const InternalsScreen({super.key});
@@ -14,96 +15,100 @@ class InternalsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Internal Assessment Manager'),
+        title: const Text('Internal Assessments'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
       ),
       body: subjects.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.assignment, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.4)),
-                  const SizedBox(height: 16),
-                  Text('No subjects configured.', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  const Text('Set up subjects under the Attendance tab to track internal marks.', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
+          ? EmptyState(
+              icon: Icons.assignment_rounded,
+              title: 'No subjects configured',
+              description: 'Add subjects under the Attendance tab to start tracking internal marks.',
+              actionLabel: 'Add Subject',
+              onAction: () => context.push('/attendance/timetable'),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
               itemCount: subjects.length,
               itemBuilder: (context, index) {
                 final subject = subjects[index];
                 final stats = ref.watch(subjectInternalsStatsProvider(subject.id));
-                
+
                 final double earned = stats['earnedWeighted'] as double;
                 final double totalWeightage = stats['totalWeightage'] as double;
                 final double percent = stats['percentage'] as double;
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AppCard(
                     onTap: () => context.push('/internals/subject/${subject.id}'),
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  subject.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                subject.name,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${percent.toStringAsFixed(1)}%',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: LinearProgressIndicator(
-                              value: totalWeightage == 0 ? 0.0 : earned / totalWeightage,
-                              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                              color: theme.colorScheme.primary,
-                              minHeight: 6,
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Evaluated Marks: ${earned.toStringAsFixed(1)} / ${totalWeightage.toStringAsFixed(0)}',
-                                style: theme.textTheme.bodySmall,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              Text(
-                                'Remaining Weight: ${(100.0 - totalWeightage).toStringAsFixed(0)}%',
-                                style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+                              child: Text(
+                                '${percent.toStringAsFixed(1)}%',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: totalWeightage == 0 ? 0.0 : earned / totalWeightage,
+                            backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                            color: theme.colorScheme.primary,
+                            minHeight: 8,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Evaluated: ${earned.toStringAsFixed(1)} / ${totalWeightage.toStringAsFixed(0)}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            Text(
+                              'Remaining: ${(100.0 - totalWeightage).toStringAsFixed(0)}%',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 );
