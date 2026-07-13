@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../core/storage/backup_restore_service.dart';
 import '../../../../core/config/app_info.dart';
@@ -155,6 +157,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     if (mounted) {
       AppSnackBar.success(context, 'Grading System "$name" saved and selected');
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch URL')),
+        );
+      }
     }
   }
 
@@ -404,51 +419,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── About ──
-            const SectionHeader(title: 'About'),
+            // ── Application & Legal ──
+            const SectionHeader(title: 'Application & Legal'),
             AppCard(
               child: Column(
                 children: [
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.info_outline_rounded, color: theme.colorScheme.onPrimaryContainer),
-                    ),
-                    title: Text('Application Name', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                    subtitle: Text(appInfo.appName, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                    leading: const Icon(Icons.info_outline_rounded),
+                    title: const Text('About Student Companion'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => context.push('/settings/about'),
                   ),
                   const Divider(),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.new_releases_outlined, color: theme.colorScheme.onSecondaryContainer),
-                    ),
-                    title: Text('Current Version', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                    subtitle: Text('${appInfo.version} (Build ${appInfo.buildNumber})', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                    leading: const Icon(Icons.privacy_tip_outlined),
+                    title: const Text('Privacy Policy'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => context.push('/settings/privacy'),
                   ),
                   const Divider(),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(Icons.code_rounded, color: theme.colorScheme.onTertiaryContainer),
-                    ),
-                    title: Text('Developer', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                    subtitle: Text('Sundramdotdev', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                    leading: const Icon(Icons.gavel_rounded),
+                    title: const Text('Open Source Licenses'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => context.push('/settings/licenses'),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.bug_report_outlined),
+                    title: const Text('Send Feedback'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => _launchUrl('mailto:sundram.devv@gmail.com'),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.star_outline_rounded),
+                    title: const Text('Rate App'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => _launchUrl('https://github.com/sundramdotdev/student_companion'),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.share_rounded),
+                    title: const Text('Share App'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => _launchUrl('https://github.com/sundramdotdev/student_companion'),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.code_rounded),
+                    title: const Text('GitHub Repository'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => _launchUrl('https://github.com/sundramdotdev/student_companion'),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.system_update_alt_rounded),
+                    title: const Text('App Version'),
+                    subtitle: Text('${appInfo.version} (Build ${appInfo.buildNumber})'),
                   ),
                 ],
               ),

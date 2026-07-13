@@ -10,6 +10,9 @@ import '../../features/gpa/presentation/screens/semester_detail_screen.dart';
 import '../../features/internals/presentation/screens/internals_screen.dart';
 import '../../features/internals/presentation/screens/subject_internals_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/settings/presentation/screens/about_screen.dart';
+import '../../features/settings/presentation/screens/privacy_policy_screen.dart';
+import '../../features/settings/presentation/screens/open_source_licenses_screen.dart';
 import 'navigation_shell.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -106,6 +109,20 @@ final GoRouter router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/settings',
       builder: (context, state) => const SettingsScreen(),
+      routes: [
+        GoRoute(
+          path: 'about',
+          builder: (context, state) => const AboutScreen(),
+        ),
+        GoRoute(
+          path: 'privacy',
+          builder: (context, state) => const PrivacyPolicyScreen(),
+        ),
+        GoRoute(
+          path: 'licenses',
+          builder: (context, state) => const OpenSourceLicensesScreen(),
+        ),
+      ],
     ),
   ],
 );
