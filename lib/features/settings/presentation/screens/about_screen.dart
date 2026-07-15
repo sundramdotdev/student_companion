@@ -13,9 +13,9 @@ class AboutScreen extends ConsumerWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch URL')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not launch URL')));
       }
     }
   }
@@ -26,9 +26,7 @@ class AboutScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('About'),
-      ),
+      appBar: AppBar(title: const Text('About')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -43,12 +41,16 @@ class AboutScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               appInfo.appName,
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               'Your Ultimate Offline Academic Assistant',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -60,7 +62,9 @@ class AboutScreen extends ConsumerWidget {
               ),
               child: Text(
                 'Version ${appInfo.version} (Build ${appInfo.buildNumber})',
-                style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onPrimaryContainer),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -91,7 +95,9 @@ class AboutScreen extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.code_rounded),
                     title: const Text('Tech Stack'),
-                    subtitle: const Text('Flutter, Riverpod, Hive, GoRouter, Freezed'),
+                    subtitle: const Text(
+                      'Flutter, Riverpod, Hive, GoRouter, Freezed',
+                    ),
                   ),
                   const Divider(),
                   ListTile(
@@ -105,14 +111,18 @@ class AboutScreen extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.public_rounded),
                     title: const Text('Open Source Notice'),
-                    subtitle: const Text('Student Companion is proudly an open-source project.'),
+                    subtitle: const Text(
+                      'Student Companion is proudly an open-source project.',
+                    ),
                   ),
                   const Divider(),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.map_rounded),
                     title: const Text('Future Roadmap'),
-                    subtitle: const Text('PDF reports, localization, exam timers.'),
+                    subtitle: const Text(
+                      'PDF reports, localization, exam timers.',
+                    ),
                   ),
                 ],
               ),
@@ -135,15 +145,21 @@ class AboutScreen extends ConsumerWidget {
                     leading: const Icon(Icons.email_rounded),
                     title: const Text('Contact'),
                     subtitle: const Text('sundram.devv@gmail.com'),
-                    onTap: () => _launchUrl('mailto:sundram.devv@gmail.com', context),
+                    onTap: () =>
+                        _launchUrl('mailto:sundram.devv@gmail.com', context),
                   ),
                   const Divider(),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.link_rounded),
                     title: const Text('GitHub Repository'),
-                    subtitle: const Text('github.com/sundramdotdev/student_companion'),
-                    onTap: () => _launchUrl('https://github.com/sundramdotdev/student_companion', context),
+                    subtitle: const Text(
+                      'github.com/sundramdotdev/student_companion',
+                    ),
+                    onTap: () => _launchUrl(
+                      'https://github.com/sundramdotdev/student_companion',
+                      context,
+                    ),
                   ),
                   const Divider(),
                   ListTile(
@@ -151,7 +167,8 @@ class AboutScreen extends ConsumerWidget {
                     leading: const Icon(Icons.work_rounded),
                     title: const Text('Portfolio'),
                     subtitle: const Text('github.com/sundramdotdev'),
-                    onTap: () => _launchUrl('https://github.com/sundramdotdev', context),
+                    onTap: () =>
+                        _launchUrl('https://github.com/sundramdotdev', context),
                   ),
                 ],
               ),
